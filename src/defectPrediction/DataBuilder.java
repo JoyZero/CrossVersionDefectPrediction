@@ -23,6 +23,17 @@ public class DataBuilder {
 		return res;
 	}
 	
+	public static Instances copyData(Instances data) {
+		Instances res = new Instances(data);
+		res.delete();
+		for (int i = 0; i < data.numInstances(); i++) {
+			Instance ins = data.instance(i);
+			Instance insCopy = new Instance(ins);
+			res.add(insCopy);
+		}
+		return res;
+	}
+	
 	public static int[] mergeData(Instances data1, Instances data2, int[] indexes) {
 		int[] resIndexes = new int[data1.numInstances() + data2.numInstances()];
 		for (int i = 0; i < data1.numInstances(); i++) {
@@ -64,7 +75,7 @@ public class DataBuilder {
 		return res;
 	}
 	
-	public static Instances filterConflictInstance(Instances data, int[] indexes) {
+	public static Instances filterConflictInstance(Instances data, int[] indexes, boolean leaveOne) {
 		Instances res = new Instances(data);
 		res.delete();
 		Map<String, List<Instance>> dataMap = new HashMap<>();
@@ -84,11 +95,22 @@ public class DataBuilder {
 			if (value.size() == 1) {
 				res.add(value.get(0));
 			}else {
-				res.add(selectInstance(value));
+				if (leaveOne) {
+					res.add(selectInstance(value));
+				}else {
+					List<Instance> list = selectInstance2(value);
+					for (Instance ins : list) {
+						res.add(ins);
+					}
+				}
+				
 			}
 		}
 		return res;
 	}
+	
+	
+	
 	
 	public static Instance selectInstance(List<Instance> instances) {
 		int buggyCount = 0;
@@ -109,11 +131,56 @@ public class DataBuilder {
 		return res;
 	}
 	
+	public static List<Instance> selectInstance2(List<Instance> instances) {
+		int buggyCount = 0;
+		Instance buggyIns = null;
+		Instance cleanIns = null;
+		for (Instance ins : instances) {
+			Attribute cls = ins.classAttribute();
+			String classStr = ins.stringValue(cls);
+			if ("1".equals(classStr)) {
+				buggyCount += 1;
+				buggyIns = buggyIns == null ? ins : buggyIns;
+			}else {
+				cleanIns = cleanIns == null ? ins : cleanIns;
+			}
+		}
+		int cleanCount = instances.size() - buggyCount;
+		List<Instance> res = new ArrayList<>();
+		for (Instance instance : instances) {
+			Instance newIns = new Instance(instance);
+			newIns.setDataset(instance.dataset());
+			if (buggyCount >= cleanCount) {
+				newIns.setClassValue("1");
+			}else {
+				newIns.setClassValue("0");
+			}
+		}
+		return res;
+	}	
+	
+	
+	public static double defectRate(Instances data) {
+		int count = 0;
+		for (int i = 0; i < data.numInstances(); i++) {
+			Instance instance = data.instance(i);
+			Attribute attr = instance.classAttribute();
+			String classStr = instance.stringValue(attr);
+			if (classStr.equals("1")) {
+				count++;
+			}
+//			if (instance.classValue() == 0) {
+//				count++;
+//			}
+		}
+		return (double)count / (double)data.numInstances();
+	}
+	
 	public static void main(String[] args) {
 		String pre = "E:/data/metric_arff1/jmeter/jmeter_metrics_";
 		String[] files = {
 				pre + "2.5.arff", pre + "2.6.arff", pre + "2.7.arff", pre + "2.8.arff",
-				pre + "2.9.arff",pre + "2.10.arff",pre + "2.11.arff",pre + "2.12.arff"
+				pre + "2.9.arff", pre + "2.10.arff", pre + "2.11.arff", pre + "2.12.arff"
 		};
 		Instances[] data = new Instances[files.length];
 		for (int i = 0; i < data.length; i++) {
@@ -125,7 +192,7 @@ public class DataBuilder {
 			System.out.println("ins num pre: " + data[0].numInstances());
 			index = mergeData(data[0], data[i], index);
 			System.out.println("ins num after: " + data[0].numInstances());
-			filterConflictInstance(data[0], index);
+			filterConflictInstance(data[0], index, false);
 		}
 		
 	}

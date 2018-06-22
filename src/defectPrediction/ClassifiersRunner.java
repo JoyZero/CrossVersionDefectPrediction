@@ -3,26 +3,22 @@ package defectPrediction;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import DataAnalysis.ClosestListNoisyIdentify;
 import gitDataProcess.Util;
 import weka.classifiers.Evaluation;
 import weka.core.Instances;
 
 
 public class ClassifiersRunner {
-	public static String dirPath = "E:/data/metric_arff1/";
-	public static String[] softwares = {
-			"xalan", 
-//			"jmeter", 
-//			"camel", 
-//			"celery", 
-//			"kivy", "tensorflow", "zulip",						
-//			"geode", "beam","cloudstack", "isis", 			
-//			"okhttp", "mahout"
-	};
+
+	
+	
 	
 	public static List<String> getVerFileList(String name) {
 		List<String> files = new LinkedList<String>();
@@ -48,30 +44,119 @@ public class ClassifiersRunner {
 			int maxTreeNum = 20;
 			int minFeatureNum = 4;
 			int maxFeatureNum = 10;
-			for (int treeNum = minTreeNum; treeNum < maxTreeNum; treeNum++) {
-				for (int featureNum  = minFeatureNum; featureNum < maxFeatureNum; featureNum++) {
+			for (int treeNum = minTreeNum; treeNum <= maxTreeNum; treeNum++) {
+				for (int featureNum  = minFeatureNum; featureNum <= maxFeatureNum; featureNum++) {
 					String[] options = {"-I", treeNum + "", "-K", featureNum + ""};
 					optionsList.add(options);
 				}
 			}
+			return optionsList;
 		}		
-		return optionsList;
+		return null;
 	}
 	
 	public static void runPredictionWithParams(String name, String model, String featureSelection, String rebalance) {
-		List<String[]> optionsList =  produceParams(model);
-		
-		for (String[] optsions : optionsList) {
-			runAllCrossVersionPrediction(name, model, featureSelection, rebalance, optsions);
+		List<String[]> optionsList =  produceParams(model);	
+		Map<String, Evaluation[][]> allParamResults = new HashMap<>();
+		int rowLen = 0;
+		int colLen = 0;
+		for (String[] options : optionsList) {
+			String paramStr = paramStr(options);
+			System.out.println("---" + name + " " + model + "runing params: " + paramStr);
+			Evaluation[][] result = runAllCrossVersionPrediction(name, model, featureSelection, rebalance, options);
+			System.gc();
+			allParamResults.put(paramStr, result);
+			rowLen = result.length;
+			colLen = result[0].length;
 		}
+		bestFmResult(name, model, featureSelection, rebalance, allParamResults, rowLen, colLen);
 	}
 	
-	public static void runAllCrossVersionPrediction(String name, String model, String featureSelection, String rebalance, String[] options) {
+	public static void runPredictionWithParams2(String name, String model, String featureSelection, String rebalance) {
+		List<String[]> optionsList =  produceParams(model);	
+		Evaluation[][] bestResult = null;
+		String[][] bestResultParams = null;
+		int rowLen = 0;
+		int colLen = 0;
+		for (String[] options : optionsList) {
+			String paramStr = paramStr(options);
+			System.out.println("---" + name + " " + model + "runing params: " + paramStr);
+			Evaluation[][] result = runAllCrossVersionPrediction(name, model, featureSelection, rebalance, options);
+			System.gc();
+			rowLen = result.length;
+			colLen = result[0].length;
+			if (bestResult == null) {
+				bestResult = result;
+				bestResultParams = new String[rowLen][colLen];
+				for (int i = 0; i < rowLen; i++) {
+					for (int j = 0; j < colLen; j++) {
+						if (result[i][j] != null) {
+							bestResultParams[i][j] = paramStr; 
+						}
+					}
+				}
+			}else {
+				for (int i = 0; i < rowLen; i++) {
+					for (int j = 0; j < colLen; j++) {
+						if (result[i][j] != null && result[i][j].fMeasure(0) > bestResult[i][j].fMeasure(0)) {
+							bestResult[i][j] = result[i][j]; 
+							bestResultParams[i][j] = paramStr;
+						}
+					}
+				}
+			}
+		}
+		List<String> files = getVerFileList(name);
+		Util.sortFileName(files);
+		formatResult(bestResult, name, model, featureSelection, rebalance, files, null, bestResultParams);
+	}
+	
+	public static void bestFmResult(String name, String model, String featureSelection, String rebalance,
+			Map<String, Evaluation[][]> results, int rowLen, int colLen) {
+		Evaluation[][] bestEvals = new Evaluation[rowLen][colLen];
+		String[][] bestResultParams = new String[rowLen][colLen];;
+		for (String paramStr : results.keySet()) {
+			Evaluation[][] evals = results.get(paramStr);
+			for (int row = 0; row < rowLen; row++) {
+				int col = row >= rowLen - 2 ? 1 : row;
+				for (; col < colLen; col++) {
+					Evaluation eval = evals[row][col];
+					Evaluation curBest = bestEvals[row][col];
+					if (curBest == null || eval.fMeasure(0) > curBest.fMeasure(0)) {
+						bestEvals[row][col] = eval;
+						bestResultParams[row][col] = paramStr;
+						
+					}
+				}
+			}
+		}
+		List<String> files = getVerFileList(name);
+		Util.sortFileName(files);
+		formatResult(bestEvals, name, model, featureSelection, rebalance, files, null, bestResultParams);
+		
+	}
+	
+	
+	public static String paramStr(String[] options) {
+		String result = "";
+		for (int i = 0; i < options.length; i++) {
+			result += options[i++];
+			result += ("=" + options[i]);
+		}
+		return result;
+	}
+	
+
+	
+	public static Evaluation[][] runAllCrossVersionPrediction(String name, String model, String featureSelection, 
+			String rebalance, String[] options) {		
 		List<String> files = getVerFileList(name);
 		Util.sortFileName(files);	
 		int verNum = files.size();		
-		Evaluation[][] evals = new Evaluation[verNum+1][verNum-1];
+		Evaluation[][] evals = new Evaluation[verNum+2][verNum-1];
 		Instances[] allVersData = new Instances[files.size()];
+		allVersData = new Instances[files.size()];
+	
 		Instances[] allVerDataWithName = new Instances[files.size()];
 		for (int sourIndex = 0; sourIndex < verNum - 1; sourIndex++) {
 			//read data
@@ -88,7 +173,7 @@ public class ClassifiersRunner {
 			//select features
 			int[] features = FeatureSelection.featureSelection(trainData, featureSelection);
 			trainData = FeatureSelection.filterData(trainData, features);				
-			//build a classifier
+			//build a classifier   
 			GeneralClassifier classifier = new GeneralClassifier(trainData, model, options);		
 			//evaluate on several version test data
 			for (int targIndex = sourIndex + 1; targIndex < verNum; targIndex++) {
@@ -110,6 +195,7 @@ public class ClassifiersRunner {
 		}
 		Instances merged = new Instances(allVersData[0]);
 		int[] indexes = null;
+		String[] clniFiles = ClosestListNoisyIdentify.getOutFilepath(name, files);
 		for (int index = 1; index < allVersData.length-1; index++) {
 			//merged data as train dataset
 			merged = DataBuilder.mergeData(merged, allVersData[index]);
@@ -119,32 +205,38 @@ public class ClassifiersRunner {
 			Instances testData = allVersData[index+1];
 			testData = FeatureSelection.filterData(testData, features);
 			Evaluation eval = classifier.evalutate(testData);
-			evals[evals.length-2][index] = eval;
+			evals[evals.length-3][index] = eval;
 			
 			//filtered data as train dataset
 			indexes = DataBuilder.mergeData(allVerDataWithName[0], allVerDataWithName[index], indexes);
-			Instances filtered = DataBuilder.filterConflictInstance(allVerDataWithName[0], indexes);
+			Instances filtered = DataBuilder.filterConflictInstance(allVerDataWithName[0], indexes, false);			
 			filtered = new Instances(filtered);
 			filtered = FeatureSelection.delFilename(filtered);
 			int[] features2 = FeatureSelection.featureSelection(filtered, featureSelection);
 			Instances trainData2 = FeatureSelection.filterData(filtered, features2);
-			GeneralClassifier classifier2 = new GeneralClassifier(trainData2, model, null);
+			GeneralClassifier classifier2 = new GeneralClassifier(trainData2, model, options);
 			testData = allVersData[index+1];
 			testData = FeatureSelection.filterData(testData, features2);
 			Evaluation eval2 = classifier2.evalutate(testData);
-			evals[evals.length-1][index] = eval2;
+			evals[evals.length-2][index] = eval2;
+			
+			//clni data as train dataset
+			Instances clniData = DataBuilder.readData(clniFiles[index]);
+			int[] features3 = FeatureSelection.featureSelection(clniData, featureSelection);
+			clniData = FeatureSelection.filterData(clniData, features3); 
+			GeneralClassifier classifier3 = new GeneralClassifier(clniData, model, options);
+			testData = allVersData[index+1];
+			testData = FeatureSelection.filterData(testData, features2);
+			Evaluation eval3 = classifier3.evalutate(testData);
+			evals[evals.length-1][index] = eval3;
+			
 		}
-		formatResult(evals, name, model, featureSelection, rebalance, files);
+		formatResult(evals, name, model, featureSelection, rebalance, files, options, null);
+		return evals;
 	}
-	
-	public static void formatResultsWithParams(Evaluation[][] evals, String name, String model, 
-			String featureSelection, String rebalance, List<String> files, String[] options) {
-		
-	}
-	
 	
 	private static void formatResult(Evaluation[][] evals, String name, String model, 
-			String featureSelection, String rebalance, List<String> files) {
+			String featureSelection, String rebalance, List<String> files, String[] options, String[][] bestParams) {
 		int rowNum = evals.length;
 		int colNum = evals[0].length;
 		Double[][] bugPrec = new Double[rowNum][colNum];
@@ -158,18 +250,25 @@ public class ClassifiersRunner {
 				.collect(Collectors.toList());
 		tags.add("allData");
 		tags.add("filtered");
-		for (int sourIndex = 0; sourIndex < rowNum; sourIndex++) {
+		tags.add("clni");
+		if (options != null) {
+			String paramStr = paramStr(options);
+			allResults.add(paramStr);
+		}
+ 		for (int sourIndex = 0; sourIndex < rowNum; sourIndex++) {
 			for (int targIndex = 0; targIndex < colNum; targIndex++) {
-				if (sourIndex <= targIndex || (sourIndex >= rowNum-2 && targIndex >= 1)) {
+				if (sourIndex <= targIndex || (sourIndex >= rowNum-3 && targIndex >= 1)) {
 					Evaluation eval = evals[sourIndex][targIndex];
 					if (eval == null) {
 						continue;
 					}
 					String resultTitle = null;
-					if (sourIndex == rowNum-2) {
+					if (sourIndex == rowNum-3) {
 						resultTitle = "=== " + name + "  allData  -->" + tags.get(targIndex) + " ===";
-					} else if (sourIndex == rowNum-1) {
+					} else if (sourIndex == rowNum-2) {
 						resultTitle = "=== " + name + "  filteredData  -->" + tags.get(targIndex) + " ===";
+					} else if (sourIndex == rowNum - 1) {
+						resultTitle = "=== " + name + "  cnli  -->" + tags.get(targIndex) + " ===";
 					} else {
 						resultTitle = "=== " + name + "  " + tags.get(sourIndex) + "-->" + tags.get(targIndex) + " ===";
 					}
@@ -189,16 +288,16 @@ public class ClassifiersRunner {
 			}
 		}
 		writeResults(name, model, featureSelection, tags, 
-				bugPrec, bugRecall, bugF, gMean, balance, allResults);
+				bugPrec, bugRecall, bugF, gMean, balance, allResults, options, bestParams);
 	}
 	
 
 
 	private static void writeResults(String name, String model, String featureSelection, List<String> tags,
 			Double[][] bugPrec, Double[][] bugRecall, Double[][] bugF, Double[][] gMean, Double[][] balance,
-			List<String> allResults) {
-		String detailResultPath = getFilePath(name, "detail", model, featureSelection, null, false);
-		String summaryResultPath = getFilePath(name, "summary", model, featureSelection, null, false);
+			List<String> allResults, String[] params, String[][] bestParams) {
+		String detailResultPath = getFilePath(name, "detail", model, featureSelection, null, params, bestParams == null ? false : true);
+		String summaryResultPath = getFilePath(name, "summary", model, featureSelection, null, params, bestParams == null ? false : true);
 		Util.writeFile(detailResultPath, allResults);
 		List<String> tables = new ArrayList<>();		
 		tables.add(markdownTableFormatDouble(bugPrec, tags, "Precision", null));
@@ -206,10 +305,14 @@ public class ClassifiersRunner {
 		tables.add(markdownTableFormatDouble(bugF, tags, "Fmeasure", null));
 		tables.add(markdownTableFormatDouble(gMean, tags, "gMean", null));
 		tables.add(markdownTableFormatDouble(balance, tags, "balance", null));
+		if (bestParams != null) {
+			tables.add(markdownTableFormatStr(bestParams, tags, "bestParams"));
+		}
 		Util.writeFile(summaryResultPath, tables);
 	}
 
-	public static String getFilePath(String name, String type, String model, String fSelection, String rebalance, boolean withParams) {
+	public static String getFilePath(String name, String type, String model, String fSelection, String rebalance, 
+			String[] params, boolean isBest) {
 		String fs = fSelection == null ? "" : fSelection;
 		String rb = rebalance == null ? "" : rebalance;
 		String modelStr = "-" + model;
@@ -237,12 +340,16 @@ public class ClassifiersRunner {
 			}	
 		}
 		String dir = dirPath + name + "/";
-		String param = "";
-		if (withParams) {
-			dir += "paprams-out/";
-			param = "";
+		String paramStr = "";
+		if (params != null) {
+			dir += "params-out/";
+			paramStr = paramStr(params);
 		}
-		String res = dir + name +  "-" + type + modelStr + fs + rb + param + ".txt";
+		String bestStr = "";
+		if (isBest) {
+			bestStr = "-BEST";
+		}
+		String res = dir + name +  "-" + type + modelStr + fs + rb + paramStr + bestStr + "2.txt";
 		return res; 
 	}
 	
@@ -279,7 +386,8 @@ public class ClassifiersRunner {
 			int tagIndex = sourIndex >= colNum ? sourIndex + 1 : sourIndex;
 			String line = "|" + tags.get(tagIndex)  + "\t|";
 			for (int targIndex = 0; targIndex < colNum; targIndex++) {
-				String element = data[sourIndex][targIndex] +  "\t|";
+				String content = data[sourIndex][targIndex] == null ? "" : data[sourIndex][targIndex];
+				String element = content +  "\t|";
 				line += element;
 			}
 			res += line + "\n";
@@ -287,27 +395,37 @@ public class ClassifiersRunner {
 		return res;
 	}
 	
-	
+	public static String dirPath = "E:/data/metric_arff1/";
+	public static String[] softwares = {
+//			"xalan", 
+//			"jmeter", 
+			"camel", 
+//			"celery", 
+//			"kivy", "tensorflow", "zulip",						
+//			"geode", "beam","cloudstack", "isis", 			
+//			"okhttp", "mahout"
+	};
 		
 	public static void main(String[] args) {
 		String[] models = {
 			GeneralClassifier.CLASSIFIER_RANDOM_FOREST,
-			GeneralClassifier.CLASSIFIER_NAIVE_BAYES,
-			GeneralClassifier.CLASSIFIER_LOGISTIC,
+//			GeneralClassifier.CLASSIFIER_NAIVE_BAYES,
+//			GeneralClassifier.CLASSIFIER_LOGISTIC,
 //			GeneralClassifier.CLASSIFIER_SVM
 		};
 		String[] attrSele = {
-//			null,
+			null,
 //			FeatureSelection.CFS_ATTRIBUTE_SELECTION,
 //			FeatureSelection.CLASSIFIER_ATTRIBUTE_SELECTION,
-			FeatureSelection.FILTER_ATTRIBUTE_SELECTION
-		};
+//			FeatureSelection.FILTER_ATTRIBUTE_SELECTION
+		}; 
 		for (String name : softwares) {
 			System.out.println("===========processing " + name + "===========");
 			for (String model : models) {
 				System.out.println("Using " + model + "...");
 				for (String selec : attrSele) {
-					runAllCrossVersionPrediction(name, model, selec, null, null);
+					//runAllCrossVersionPrediction(name, model, selec, null, null);
+					runPredictionWithParams2(name, model, selec, null);
 				}
 			}
 			System.out.println(name + " finished");

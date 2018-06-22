@@ -45,7 +45,8 @@ public class GeneralClassifier {
 					break;
 			}
 			if (params != null) {
-				classifier.setOptions(params);
+				String[] paramsNew = params.clone();
+				classifier.setOptions(paramsNew);
 			}
 			classifier.buildClassifier(data);
 		} catch (Exception e) {

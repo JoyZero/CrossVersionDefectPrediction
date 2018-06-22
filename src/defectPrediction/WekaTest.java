@@ -52,11 +52,18 @@ public class WekaTest {
  			reader2.close();
  			trainSet.setClassIndex(trainSet.numAttributes() - 1);
  			testSet.setClassIndex(testSet.numAttributes() - 1);
+ 			for (String opt : options) {
+ 				System.out.print(opt + " ");
+ 			}
+ 			System.out.println("");
+ 			String[] optNew = options.clone();
  			RandomForest rf = new RandomForest();
- 			rf.setOptions(options);
+ 			rf.setOptions(optNew);
  			rf.buildClassifier(trainSet);
- 			
- 			
+ 			for (String opt : options) {
+ 				System.out.print(opt + " ");
+ 			}
+ 			System.out.println("*");
  			Evaluation eval = new Evaluation(trainSet);
  			eval.evaluateModel(rf, testSet);
  			double f = eval.fMeasure(0);
