@@ -1,6 +1,7 @@
 package defectPrediction;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.util.Map;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.converters.ArffSaver;
 
 public class DataBuilder {
 	public static Instances mergeData(Instances data1, Instances data2) {
@@ -109,9 +111,6 @@ public class DataBuilder {
 		return res;
 	}
 	
-	
-	
-	
 	public static Instance selectInstance(List<Instance> instances) {
 		int buggyCount = 0;
 		Instance buggyIns = null;
@@ -159,6 +158,17 @@ public class DataBuilder {
 		return res;
 	}	
 	
+	public static void writeArffFile(Instances data, String path) {
+		ArffSaver saver = new ArffSaver();
+		saver.setInstances(data);
+		try {
+			saver.setFile(new File(path));
+			saver.writeBatch();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	
 	public static double defectRate(Instances data) {
 		int count = 0;
@@ -169,9 +179,6 @@ public class DataBuilder {
 			if (classStr.equals("1")) {
 				count++;
 			}
-//			if (instance.classValue() == 0) {
-//				count++;
-//			}
 		}
 		return (double)count / (double)data.numInstances();
 	}
@@ -185,15 +192,16 @@ public class DataBuilder {
 		Instances[] data = new Instances[files.length];
 		for (int i = 0; i < data.length; i++) {
 			data[i] = DataBuilder.readData(files[i]);
+			System.out.println(DataBuilder.defectRate(data[i]));
 		}
 		
-		int[] index = null;
-		for (int i = 1; i < data.length-1; i++) {
-			System.out.println("ins num pre: " + data[0].numInstances());
-			index = mergeData(data[0], data[i], index);
-			System.out.println("ins num after: " + data[0].numInstances());
-			filterConflictInstance(data[0], index, false);
-		}
+//		int[] index = null;
+//		for (int i = 1; i < data.length-1; i++) {
+//			System.out.println("ins num pre: " + data[0].numInstances());
+//			index = mergeData(data[0], data[i], index);
+//			System.out.println("ins num after: " + data[0].numInstances());
+//			filterConflictInstance(data[0], index, false);
+//		}
 		
 	}
 	

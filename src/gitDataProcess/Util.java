@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Util {
 	
@@ -24,6 +25,18 @@ public class Util {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static List<String> extractTags(List<String> files) {
+		List<String> tags = files.stream()
+				.map(filename -> filename.substring(0, filename.length() - 5).split("_")[2])
+				.collect(Collectors.toList());
+		return tags;
+	}
+	
+	public static String extractTag(String filename) {
+		String tag = filename.substring(0,  filename.length() - 5).split("_")[2];
+		return tag;
 	}
 	
 	public static String getLogFilePath(String name) {

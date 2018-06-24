@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import DataAnalysis.ClosestListNoisyIdentify;
 import gitDataProcess.Util;
@@ -245,9 +244,7 @@ public class ClassifiersRunner {
 		Double[][] gMean = new Double[rowNum][colNum];
 		Double[][] balance = new Double[rowNum][colNum];
 		List<String> allResults = new ArrayList<>();
-		List<String> tags = files.stream()
-				.map(filename -> filename.substring(0, filename.length() - 5).split("_")[2])
-				.collect(Collectors.toList());
+		List<String> tags = Util.extractTags(files);
 		tags.add("allData");
 		tags.add("filtered");
 		tags.add("clni");
@@ -395,7 +392,7 @@ public class ClassifiersRunner {
 		return res;
 	}
 	
-	public static String dirPath = "E:/data/metric_arff1/";
+	public static String dirPath = "E:/data/metric-arff1/";
 	public static String[] softwares = {
 //			"xalan", 
 //			"jmeter", 

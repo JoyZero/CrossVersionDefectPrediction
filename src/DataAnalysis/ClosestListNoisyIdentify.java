@@ -1,7 +1,5 @@
 package DataAnalysis;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -15,7 +13,6 @@ import gitDataProcess.Util;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.converters.ArffSaver;
 
 public class ClosestListNoisyIdentify {
 	private Instances data;
@@ -151,14 +148,7 @@ public class ClosestListNoisyIdentify {
 	}
 	
 	public void writeFile() {
-		ArffSaver saver = new ArffSaver();
-		saver.setInstances(data);
-		try {
-			saver.setFile(new File(outPath));
-			saver.writeBatch();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		DataBuilder.writeArffFile(data, outPath);
 	}
 	
 	public double calSetSimularity(Set<Instance> set1, Set<Instance> set2) {
