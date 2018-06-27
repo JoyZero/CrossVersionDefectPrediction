@@ -1,11 +1,11 @@
 package DataAnalysis;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import defectPrediction.DataBuilder;
+import defectPrediction.GeneralClassifier;
 import gitDataProcess.Util;
 import weka.core.Attribute;
 import weka.core.Instance;
@@ -70,9 +70,9 @@ public class DataSpiliter {
 		return res;
 	}
 	
-	private static String[] outPath(String name, String filename) {
+	public static String[] outPath(String name, String filePath) {
 		String pre = dirPath + name + "/split/" + name + "_metrics_"; 
-		String tag = Util.extractTag(filename);
+		String tag = Util.extractTag(filePath);
 		String newOut = pre + tag + "-newFiles.arff";
 		String existOut = pre + tag + "-existFilse.arff";
 		String[] res = {newOut, existOut};
@@ -97,8 +97,7 @@ public class DataSpiliter {
 			}
 		}
 	}
-	
-	
+
 	public static String[] softwares = {
 			"xalan", 
 			"jmeter", 
@@ -108,6 +107,7 @@ public class DataSpiliter {
 //			"geode", "beam","cloudstack", "isis", 			
 //			"okhttp", "mahout"
 	};
+
 	
 	public static void main(String[] args) {
 		for (String name : softwares) {
