@@ -138,6 +138,7 @@ public class SplitedDataAnalysis {
 		Double[][] balance = new Double[rowNum][colNum];
 		List<String> allResults = new ArrayList<>();
 		List<String> tags = Util.extractTags(files);
+		tags.add("allData");
 		if (options != null) {
 			String paramStr = ClassifiersRunner.paramStr(options);
 			allResults.add(paramStr);
