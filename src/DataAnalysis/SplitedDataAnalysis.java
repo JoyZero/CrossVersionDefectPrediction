@@ -15,8 +15,8 @@ import weka.core.Instances;
 
 public class SplitedDataAnalysis {
 	
-	public static String dirPath = "E:/data/metric-arff1/";
-	
+	//public static String dirPath = "E:/data/metric-arff1/";
+	public static String dirPath = "E:/data/dataset/tera/";
 
 	
 	private Instances[] allVerData;
@@ -49,7 +49,7 @@ public class SplitedDataAnalysis {
 	public void analyseVersionData() {
 		for (int i = 1; i < files.size(); i++) {
 			String verPath = files.get(i);
-			String tag = Util.extractTag(verPath);
+			String tag = Util.extractTag2(verPath);
 			System.out.println("------" + tag + "------");
 			dataAnalysis(allVerData[i], newVerData[i], existVerData[i]);
 			
@@ -97,7 +97,6 @@ public class SplitedDataAnalysis {
 			}
 		}
 		Instances merged = new Instances(allVerData[0]);
-		String[] clniFiles = ClosestListNoisyIdentify.getOutFilepath(name, files);
 		for (int index = 1; index < allVerData.length-1; index++) {
 			//merged data as train dataset
 			merged = DataBuilder.mergeData(merged, allVerData[index]);
@@ -137,7 +136,7 @@ public class SplitedDataAnalysis {
 		Double[][] gMean = new Double[rowNum][colNum];
 		Double[][] balance = new Double[rowNum][colNum];
 		List<String> allResults = new ArrayList<>();
-		List<String> tags = Util.extractTags(files);
+		List<String> tags = Util.extractTags2(files);
 		tags.add("allData");
 		if (options != null) {
 			String paramStr = ClassifiersRunner.paramStr(options);
@@ -216,7 +215,7 @@ public class SplitedDataAnalysis {
 				break;
 			}	
 		}
-		String dir = dirPath + name + "/split/";
+		String dir = dirPath + name + "/simpled/splited/";
 		String paramStr = "";
 		if (params != null) {
 			dir += "params-out/";
@@ -238,7 +237,7 @@ public class SplitedDataAnalysis {
 		};
 		public static String[] attrSele = {
 			null,
-			FeatureSelection.CFS_ATTRIBUTE_SELECTION,
+//			FeatureSelection.CFS_ATTRIBUTE_SELECTION,
 //			FeatureSelection.CLASSIFIER_ATTRIBUTE_SELECTION,
 //			FeatureSelection.FILTER_ATTRIBUTE_SELECTION
 		}; 
@@ -253,10 +252,14 @@ public class SplitedDataAnalysis {
 //				"okhttp", "mahout"
 		};
 
-	
+	public static String[] tera = {
+			"camel", "ivy", "jedit", "log4j", "lucene", "poi", 
+			//"prop", 
+			"synapse", "velocity", "xalan", "xerces"
+	};
 	
 	public static void runner() {
-		for (String name : softwares) {
+		for (String name : tera) {
 			System.out.println("=========" + name + "==========");
 			SplitedDataAnalysis sda = new SplitedDataAnalysis(name);
 			sda.analyseVersionData();

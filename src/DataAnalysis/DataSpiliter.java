@@ -13,7 +13,8 @@ import weka.core.Instances;
 
 public class DataSpiliter {
 	
-	public static String dirPath = "E:/data/metric-arff1/";
+	//public static String dirPath = "E:/data/metric-arff1/";
+	public static String dirPath  = "E:/data/dataset/tera/";
 	
 	public static Instances emptyDataset(Instances data) {
 		Instances res = new Instances(data);
@@ -23,7 +24,7 @@ public class DataSpiliter {
 	
 	public static List<String> getVerFileList(String name) {
 		List<String> files = new LinkedList<String>();
-		String arffDirPath = dirPath + name + "/";
+		String arffDirPath = dirPath + name + "/simpled/";
 		File dir = new File(arffDirPath);
 		if (!dir.exists() || !dir.isDirectory()) {
 			System.out.println("directory error!");
@@ -71,8 +72,10 @@ public class DataSpiliter {
 	}
 	
 	public static String[] outPath(String name, String filePath) {
-		String pre = dirPath + name + "/split/" + name + "_metrics_"; 
-		String tag = Util.extractTag(filePath);
+		//String pre = dirPath + name + "/split/" + name + "_metrics_"; 
+		String pre = dirPath + name + "/simpled/splited/" + name + "-";
+		//String tag = Util.extractTag(filePath);
+		String tag = Util.extractTag2(filePath);
 		String newOut = pre + tag + "-newFiles.arff";
 		String existOut = pre + tag + "-existFilse.arff";
 		String[] res = {newOut, existOut};
@@ -107,10 +110,17 @@ public class DataSpiliter {
 //			"geode", "beam","cloudstack", "isis", 			
 //			"okhttp", "mahout"
 	};
+	
+	
+	public static String[] tera = {
+			"camel", "ivy", "jedit", "log4j", "lucene", "poi", 
+			//"prop", 
+			"synapse", "velocity", "xalan", "xerces"
+	};
 
 	
 	public static void main(String[] args) {
-		for (String name : softwares) {
+		for (String name : tera) {
 			System.out.println("=========================" + name + "=========================");
 			splitMultiVersData(name);
 		}

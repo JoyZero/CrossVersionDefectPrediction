@@ -4,9 +4,11 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.FileNameMap;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Util {
@@ -34,8 +36,20 @@ public class Util {
 		return tags;
 	}
 	
+	public static List<String> extractTags2(List<String> files) {
+		List<String> tags = files.stream()
+				.map(filename -> filename.substring(0, filename.length() - 5).split("-")[1])
+				.collect(Collectors.toList());
+		return tags;
+	}
+	
 	public static String extractTag(String filename) {
 		String tag = filename.substring(0,  filename.length() - 5).split("_")[2];
+		return tag;
+	}
+	
+	public static String extractTag2(String filename) {
+		String tag = filename.substring(0, filename.length() - 5).split("-")[1];
 		return tag;
 	}
 	
@@ -78,13 +92,21 @@ public class Util {
 	
 	public static void sortFileName(List<String> files) {
 		files.sort(new Comparator<String>() {
+			Pattern pattern = Pattern.compile("^[\\d]*$");
 			@Override
 			public int compare(String s1, String s2) {
-				s1 = s1.split("_")[2];
-				s2 = s2.split("_")[2];
+				s1 = s1.split("-")[1];
+				s2 = s2.split("-")[1];
 				String[] parts1 = s1.trim().split("\\.");
 				String[] parts2 = s2.trim().split("\\.");
-				for (int i = 0;  i < parts1.length && i < parts2.length; i++) {
+				for (int i = 0;  i < parts1.length && i < parts2.length; i++) {					  
+			        boolean isNum1 = pattern.matcher(parts1[i]).matches(); 
+			        boolean isNum2 = pattern.matcher(parts2[i]).matches();
+			        if (!isNum1) {
+			        	return -1;
+			        }else if (!isNum2) {
+			        	return 1;
+			        }
 					int compare =Integer.parseInt(parts1[i]) - Integer.parseInt(parts2[i]);
 					if (compare != 0) {
 						return compare;						
