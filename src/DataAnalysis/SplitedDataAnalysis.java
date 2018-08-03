@@ -15,8 +15,9 @@ import weka.core.Instances;
 
 public class SplitedDataAnalysis {
 	
-	//public static String dirPath = "E:/data/metric-arff1/";
-	public static String dirPath = "E:/data/dataset/tera/";
+//	public static String dirPath = "E:/data/metric-arff1/";
+//	public static String dirPath = "E:/data/dataset/tera/";
+	public static String dirPath = "C:/Users/1/Desktop/dataset/tera/";
 
 	
 	private Instances[] allVerData;

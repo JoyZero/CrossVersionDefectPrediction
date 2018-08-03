@@ -95,8 +95,10 @@ public class Util {
 			Pattern pattern = Pattern.compile("^[\\d]*$");
 			@Override
 			public int compare(String s1, String s2) {
-				s1 = s1.split("-")[1];
-				s2 = s2.split("-")[1];
+				String[] temp1 = s1.split("/");
+				String[] temp2 = s2.split("/");
+				s1 = temp1[temp1.length-1].split("_")[2];
+				s2 = temp2[temp2.length-1].split("_")[2];
 				String[] parts1 = s1.trim().split("\\.");
 				String[] parts2 = s2.trim().split("\\.");
 				for (int i = 0;  i < parts1.length && i < parts2.length; i++) {					  
@@ -104,6 +106,7 @@ public class Util {
 			        boolean isNum2 = pattern.matcher(parts2[i]).matches();
 			        if (!isNum1) {
 			        	return -1;
+
 			        }else if (!isNum2) {
 			        	return 1;
 			        }
