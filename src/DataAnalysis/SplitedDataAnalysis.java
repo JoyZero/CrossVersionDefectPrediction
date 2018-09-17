@@ -16,8 +16,8 @@ import weka.core.Instances;
 public class SplitedDataAnalysis {
 	
 //	public static String dirPath = "E:/data/metric-arff1/";
-//	public static String dirPath = "E:/data/dataset/tera/";
-	public static String dirPath = "C:/Users/1/Desktop/dataset/tera/";
+	public static String dirPath = "E:/data/dataset/tera/";
+//	public static String dirPath = "C:/Users/1/Desktop/dataset/tera/";
 
 	
 	private Instances[] allVerData;
@@ -150,7 +150,7 @@ public class SplitedDataAnalysis {
 					if (eval == null) {
 						continue;
 					}
-					String resultTitle = "=== " + name + "  " + tags.get(sourIndex) + "-->" + tags.get(targIndex) + " ===";;
+					String resultTitle = "=== " + name + "  " + tags.get(sourIndex) + "-->" + tags.get(targIndex+1) + " ===";;
 					String resultStr = GeneralClassifier.toDetailResult(eval, resultTitle);
 					//result process
 					allResults.add(resultStr);
@@ -232,8 +232,8 @@ public class SplitedDataAnalysis {
 	
 	public static String[] models = {
 			GeneralClassifier.CLASSIFIER_RANDOM_FOREST,
-//			GeneralClassifier.CLASSIFIER_NAIVE_BAYES,
-//			GeneralClassifier.CLASSIFIER_LOGISTIC,
+			GeneralClassifier.CLASSIFIER_NAIVE_BAYES,
+			GeneralClassifier.CLASSIFIER_LOGISTIC,
 //			GeneralClassifier.CLASSIFIER_SVM
 		};
 		public static String[] attrSele = {

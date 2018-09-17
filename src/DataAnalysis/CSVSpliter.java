@@ -2,7 +2,6 @@ package DataAnalysis;
 
 
 import gitDataProcess.Util;
-import sun.awt.image.ImageWatched;
 
 import java.io.*;
 import java.text.DecimalFormat;
@@ -12,12 +11,12 @@ public class CSVSpliter {
     public static String[] softwares = {
             "xalan",
             "jmeter",
-            "camel",
+            //"camel",
             "celery",
             "kivy", "tensorflow", "zulip",
     };
 
-    public static String dirPath = "C:/Users/1/Desktop/metrics_csv/";
+    public static String dirPath = "E:/data/metrics_csv/";
 
     public static String titleLine = null;
 
@@ -328,7 +327,7 @@ public class CSVSpliter {
                 for (int j = 0; j != i && j < len; j++) {
                     String file2 = allFiles.get(j);
                     if (dataMap.containsKey(file2)) {
-                        row[j] = simularity(file1, file2, simType);
+                        row[j] = simularity(dataMap.get(file1), dataMap.get(file2), simType);
                     }
                 }
             }
@@ -368,7 +367,7 @@ public class CSVSpliter {
                 if (!dataMap.containsKey(file2)) {
                     continue;
                 }
-                double similarity = simularity(file1, file2, simType);
+                double similarity = simularity(dataMap.get(file1), dataMap.get(file2), simType);
                 W[i][j] = similarity;
                 W[j][i] = similarity;
            }
@@ -457,8 +456,8 @@ public class CSVSpliter {
             //mergeData(name);
             //buildF(name);
             //buildI(name);
-            System.out.println("==========" + name + "============");
-            buildLPro(name, EUCLI_SIM);
+            //System.out.println("==========" + name + "============");
+            buildLPro(name, COS_SIM);
         }
 //        LinkedHashMap<String, Integer> test = new LinkedHashMap<>();
 //        test.put("111", 1);

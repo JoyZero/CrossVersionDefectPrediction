@@ -14,7 +14,8 @@ import weka.core.Instances;
 public class DataSpiliter {
 	
 	//public static String dirPath = "E:/data/metric-arff1/";
-	public static String dirPath  = "C:/Users/1/Desktop/dataset/tera/";
+	//public static String dirPath  = "C:/Users/1/Desktop/dataset/tera/";
+	public static String dirPath = "E:/data/dataset/tera/";
 	
 	public static Instances emptyDataset(Instances data) {
 		Instances res = new Instances(data);

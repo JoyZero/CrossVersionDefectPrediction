@@ -6,6 +6,7 @@ import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.trees.RandomForest;
 import weka.classifiers.functions.Logistic;
 import weka.classifiers.functions.LibSVM;
+import weka.core.Instance;
 import weka.core.Instances;
 
 public class GeneralClassifier {
@@ -53,6 +54,17 @@ public class GeneralClassifier {
 			e.printStackTrace();
 		}
 		
+	}
+	
+	public double classifyInstance(Instance instance) {
+		double res = 0;
+		try {
+			res = classifier.classifyInstance(instance);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return res;
 	}
 	
 	public Evaluation evalutate(Instances testData) {

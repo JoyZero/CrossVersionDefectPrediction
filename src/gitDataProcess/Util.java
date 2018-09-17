@@ -97,8 +97,8 @@ public class Util {
 			public int compare(String s1, String s2) {
 				String[] temp1 = s1.split("/");
 				String[] temp2 = s2.split("/");
-				s1 = temp1[temp1.length-1].split("_")[2];
-				s2 = temp2[temp2.length-1].split("_")[2];
+				s1 = temp1[temp1.length-1].split("-")[1];
+				s2 = temp2[temp2.length-1].split("-")[1];
 				String[] parts1 = s1.trim().split("\\.");
 				String[] parts2 = s2.trim().split("\\.");
 				for (int i = 0;  i < parts1.length && i < parts2.length; i++) {					  
